@@ -138,8 +138,10 @@ The portable build runs Vinext directly without a host `timeout` command. The ma
 
 One-time setup:
 
-1. Create a preview D1 database (`npx wrangler d1 create church-preview`). All review apps share it; keep production data out of it.
-2. Repository secrets: `CLOUDFLARE_API_TOKEN` (Workers Scripts and D1 edit) and `CLOUDFLARE_ACCOUNT_ID`.
-3. Repository variable: `PREVIEW_D1_DATABASE_ID` (the new database's ID).
+1. Create a Supabase project for previews (all review apps share it; keep real data out) and run `supabase/migrations/20261114000000_init.sql` in its SQL editor. Tables have Row Level Security on with no policies, so only the server key can read them.
+2. Repository secrets: `CLOUDFLARE_API_TOKEN` (Workers Scripts edit), `CLOUDFLARE_ACCOUNT_ID`, and `SUPABASE_SERVICE_ROLE_KEY` (Project Settings, API).
+3. Repository variable: `SUPABASE_URL` (for example `https://abcd.supabase.co`).
+
+The API routes switch to Supabase when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set on the Worker, and otherwise use the Cloudflare D1 binding `DB`. Production keeps using D1; nothing changes there.
 
 Fork PRs are skipped because they cannot read secrets.

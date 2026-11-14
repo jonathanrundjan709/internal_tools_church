@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { sb, supabaseEnabled, SupabaseError } from '../../../lib/supabase';
 export const dynamic = 'force-dynamic';
 const names = ['Ishak','Sari','Esther R','Farid','Iffi','Melky','Ester F','Rindu','Desi','Priska','Leni','Anes','Regina'];
 const types = ['ibadah','ibadahkc','cooljc','coolanak','coolkc','cool','doa'];
@@ -18,7 +19,7 @@ function isRecord(x: any) {
 }
 function db() { if (!env.DB) throw new Error('Database unavailable'); return env.DB; }
 function sameOrigin(request: Request) { const origin = request.headers.get('Origin'); return !origin || origin === new URL(request.url).origin; }
-export async function GET() { try { const result = await db().prepare('SELECT payload FROM attendance ORDER BY date, id').all<{payload:string}>(); return json(result.results.map(row=>JSON.parse(row.payload))); } catch {return json({error:'Database belum tersedia'},503)} }
+export async function GET() { try { if (supabaseEnabled()) { const rows = await sb<{payload:unknown}[]>('attendance?select=payload&order=date,id'); return json(rows.map(row=>row.payload)); } const result = await db().prepare('SELECT payload FROM attendance ORDER BY date, id').all<{payload:string}>(); return json(result.results.map(row=>JSON.parse(row.payload))); } catch {return json({error:'Database belum tersedia'},503)} }
 async function write(request: Request, update: boolean) {
   if (!sameOrigin(request)) return json({error:'Origin tidak diizinkan'},403);
   try {
@@ -26,6 +27,17 @@ async function write(request: Request, update: boolean) {
     const input = await request.json(); if (!isRecord(input)) return json({error:'Data tidak valid'},400);
     const x = input as any;
     const record: any = {id:x.id,date:x.date,type:x.type,total:x.total,...(x.type==='doa'?{absent:x.absent,...(x.reasons?{reasons:x.reasons}:{})}:{groups:x.groups}),...(x.type==='ibadah' && x.newcomers!==undefined?{newcomers:x.newcomers}:{})};
+    if (supabaseEnabled()) {
+      if (update && x.type==='ibadah' && x.newcomers===undefined) {
+        const [existing] = await sb<{payload:{newcomers?:number}}[]>(`attendance?select=payload&id=eq.${encodeURIComponent(record.id)}`);
+        const old = existing?.payload;
+        if (old && typeof old.newcomers==='number' && Number.isSafeInteger(old.newcomers) && old.newcomers>=0) { if(old.newcomers>record.total) return json({error:'Total hadir lebih kecil dari jumlah jemaat baru. Muat ulang dan periksa kembali.'},409); record.newcomers=old.newcomers; }
+      }
+      const row = {id:record.id,date:record.date,type:record.type,payload:record};
+      if (update) { const changed = await sb<unknown[]>(`attendance?id=eq.${encodeURIComponent(record.id)}`,{method:'PATCH',body:{date:row.date,type:row.type,payload:record},prefer:'return=representation'}); if (!changed.length) return json({error:'Catatan tidak ditemukan'},404); }
+      else await sb('attendance',{method:'POST',body:row,prefer:'return=minimal'});
+      return json({ok:true});
+    }
     const database=db();
     // Older clients omit newcomers. Preserve the value instead of silently erasing it.
     if(update && x.type==='ibadah' && x.newcomers===undefined) {
@@ -35,11 +47,11 @@ async function write(request: Request, update: boolean) {
     // An update may change a record, but cannot overwrite another record for the same meeting.
     if(update) { const result = await database.prepare('UPDATE attendance SET date=?2,type=?3,payload=?4 WHERE id=?1').bind(record.id,record.date,record.type,JSON.stringify(record)).run(); if (!result.meta.changes) return json({error:'Catatan tidak ditemukan'},404); } else { await database.prepare('INSERT INTO attendance (id,date,type,payload) VALUES (?1,?2,?3,?4)').bind(record.id,record.date,record.type,JSON.stringify(record)).run(); }
     return json({ok:true});
-  } catch (e) { if (String(e).includes('UNIQUE constraint failed')) return json({error:'Catatan untuk jenis dan tanggal ini sudah ada'},409); return json({error:'Tidak dapat menyimpan catatan'},503); }
+  } catch (e) { if ((e instanceof SupabaseError && e.isUniqueViolation) || String(e).includes('UNIQUE constraint failed')) return json({error:'Catatan untuk jenis dan tanggal ini sudah ada'},409); return json({error:'Tidak dapat menyimpan catatan'},503); }
 }
 export async function POST(request: Request) { return write(request, false); }
 export async function PUT(request: Request) { return write(request, true); }
 export async function DELETE(request: Request) {
   if (!sameOrigin(request)) return json({error:'Origin tidak diizinkan'},403);
-  try { const id=new URL(request.url).searchParams.get('id'); if (!id || !/^[A-Za-z0-9.-]{1,80}$/.test(id)) return json({error:'ID tidak valid'},400); await db().prepare('DELETE FROM attendance WHERE id = ?').bind(id).run(); return json({ok:true}); } catch {return json({error:'Tidak dapat menghapus catatan'},503)}
+  try { const id=new URL(request.url).searchParams.get('id'); if (!id || !/^[A-Za-z0-9.-]{1,80}$/.test(id)) return json({error:'ID tidak valid'},400); if (supabaseEnabled()) { await sb(`attendance?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',prefer:'return=minimal'}); return json({ok:true}); } await db().prepare('DELETE FROM attendance WHERE id = ?').bind(id).run(); return json({ok:true}); } catch {return json({error:'Tidak dapat menghapus catatan'},503)}
 }
