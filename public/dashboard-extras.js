@@ -22,7 +22,7 @@ if(nav){
  nav.closest('.sidebar').insertBefore(cta,nav.parentElement);
  const secs=['analytics','history','calendar'].map(id=>document.getElementById(id));
  let t;const sync=()=>{let cur='home';for(const s of secs)if(s&&s.getBoundingClientRect().top<=140)cur=s.id;
-  nav.querySelectorAll('button[data-target]').forEach(b=>{const on=b.dataset.target===cur;b.classList.toggle('active',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')})};
+  nav.querySelectorAll('button[data-target]').forEach(b=>{const on=b.dataset.target===cur;b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})};
  addEventListener('scroll',()=>{clearTimeout(t);t=setTimeout(sync,60)},{passive:true});sync();
 }
 

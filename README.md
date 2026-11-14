@@ -131,3 +131,15 @@ The portable build runs Vinext directly without a host `timeout` command. The ma
 
 - [vinext Documentation](https://github.com/cloudflare/vinext)
 - [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+
+## Review apps (pull requests)
+
+`.github/workflows/preview.yml` builds every PR and deploys it to its own Cloudflare Worker named `church-pr-<number>`, then comments the URL on the PR. The Worker is deleted when the PR closes. Without credentials the workflow still builds and lints.
+
+One-time setup:
+
+1. Create a preview D1 database (`npx wrangler d1 create church-preview`). All review apps share it; keep production data out of it.
+2. Repository secrets: `CLOUDFLARE_API_TOKEN` (Workers Scripts and D1 edit) and `CLOUDFLARE_ACCOUNT_ID`.
+3. Repository variable: `PREVIEW_D1_DATABASE_ID` (the new database's ID).
+
+Fork PRs are skipped because they cannot read secrets.
