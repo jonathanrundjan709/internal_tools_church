@@ -1,0 +1,55 @@
+/* Dashboard UI + flow refinements (loaded after the base styles in dashboard.html). */
+:root{--g:#315e4e;--g-soft:#eaf2eb;--line:#e9ede8}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+section[id]{scroll-margin-top:24px}
+
+/* Sidebar: sticky, real icons, active state, primary action */
+.sidebar{position:sticky;top:0;height:100vh;align-self:start;overflow-y:auto}
+.nav button{display:flex;align-items:center;gap:11px;transition:background .15s,color .15s}
+.nav button:hover{background:#f3f7f2;color:var(--g)}
+.nav button svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.side-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;background:var(--g);color:#fff;font-weight:600;padding:13px;margin-top:-12px;box-shadow:0 6px 16px #315e4e30;transition:transform .15s,box-shadow .15s}
+.side-cta:hover{transform:translateY(-1px);box-shadow:0 8px 20px #315e4e3d}
+.side-cta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+
+/* Hero: quick-start shortcuts per meeting type */
+.hero-copy{min-width:0}
+.hero-side{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.lastnote{margin-top:12px!important;font-size:12px!important;color:#a9c4b1!important}
+.lastnote b{color:#e6f0d4;font-weight:600}
+.quick{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.quick button{border:1px solid #ffffff3d;background:#ffffff14;color:#fff;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:500;transition:background .15s}
+.quick button:hover{background:#ffffff2b}
+@media(max-width:700px){.hero-side{align-items:stretch;width:100%}.quick{justify-content:flex-start}.hero-side .primary{width:100%;min-height:48px}.quick button{min-height:40px}}
+
+/* Cards: meeting count + hover */
+.card{transition:box-shadow .2s,transform .2s}.card:hover{box-shadow:0 6px 18px #243c2a0f;transform:translateY(-1px)}
+.card small b{color:#6f8a7a;font-weight:600}
+
+/* History: filter chips + show more */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}
+.chips button{border:1px solid #e1e9e0;background:#fff;color:#6d8176;border-radius:999px;padding:7px 13px;font-size:12px;font-weight:500;min-height:34px;transition:all .15s}
+.chips button.active{background:var(--g);border-color:var(--g);color:#fff}
+.chips button:not(.active):hover{background:var(--g-soft)}
+.morebtn{display:block;width:100%;margin-top:6px;border:1px dashed #cfdccf;background:#fafcf9;color:#4b725b;border-radius:10px;padding:12px;font-weight:500}
+.morebtn:hover{background:var(--g-soft)}
+.row .textbtn{border-radius:8px}.row .textbtn:hover{background:var(--g-soft)}
+.row .textbtn:last-of-type{color:#ae7666}.row .textbtn:last-of-type:hover{background:#fbede9}
+
+/* Entry form: duplicate notice + doa shortcuts */
+.dup{display:none;margin:12px 0 0;padding:11px 13px;border-radius:10px;background:#fff6e6;border:1px solid #f0d9ae;color:#8a6420;font-size:12px;line-height:1.5}
+.dup.show{display:block}
+.dup button{border:0;background:none;color:#7a4f0e;font-weight:600;text-decoration:underline;padding:0;font-size:12px}
+.doa-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
+.doa-tools button{border:1px solid #dbe6db;background:#f8faf7;color:#4b725b;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:500}
+.doa-tools button:hover{background:var(--g-soft)}
+.submit{transition:filter .15s}.submit:hover:not(:disabled){filter:brightness(1.08)}.submit:disabled{opacity:.6;cursor:progress}
+.modal[open]{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+
+/* Toasts */
+#toasts{position:fixed;z-index:50;left:0;right:0;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;background:#1f3a2f;color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:500;box-shadow:0 10px 30px #142a2155;display:flex;gap:9px;align-items:center;animation:pop .2s ease-out}
+.toast:before{content:"✓";display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#d8e8bb;color:#1f3a2f;font-size:12px;font-weight:700}
+@media(max-width:700px){#toasts{bottom:104px}}
+@media(max-width:700px){.chips{flex-wrap:nowrap;overflow-x:auto;margin-right:-18px;padding-right:18px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips button{flex:none}}
