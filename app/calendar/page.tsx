@@ -1,2 +1,2 @@
 import { redirect } from 'next/navigation';
-export default function CalendarRedirect() { redirect('/dashboard#calendar'); }
+export default function CalendarRedirect() { redirect('/dashboard.html#calendar'); }
